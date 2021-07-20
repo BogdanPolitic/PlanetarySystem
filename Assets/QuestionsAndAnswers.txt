@@ -1,0 +1,15 @@
+INFO:
+
+i1) Checkerele actioneaza la fel si cele pentru planete, si cele pentru halfspheres! Pe principiul de a fi prezent la o pozitie ulterioara cu un frame fata de entitatile pe care le check-uiesc.
+
+i2) Fiecare planeta si semisfera are un ordIdx (identificator) ce arata ordinea crearii (nasterii) acestor entitati sub forma de ceas vectorial (increment de 1 per noua entitate).
+
+i3) dissapearThen (atributul ce se ataseaza atributului RenderSwitch al obiectului Planet) este intotdeauna fals pana acum! Acest atribut se refera la disparitia obiectului in stare de flickering. Momentan (anul 2018) e implementat ca orice planeta aflata in flickering sa reapara ca planeta normala dupa numarul numberOfSwitches de switch-uri.
+
+Q:
+
+pt i2) De ce fiecarei emisfere (planete) si checker-ului ei li se atribuie o masa (la rigidbody, evident) dependenta de acel ordIdx? (depind doar in masura mica de el, deoarece apare impartit la 100, in constructorul Halfsphere).
+
+
+
+Cum ar fi sa modific numele listei motionFreePlanets in motionFreeFragments? Motiv: numai semisferele sunt in miscare libera.

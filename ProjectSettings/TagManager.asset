@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - NotYetPressed
+  - Holding
+  - Pressing
+  - Releasing
+  - ToRaycast
+  - ToRaycast_NewGame
+  - ToRaycast_LoadGame
+  - ToRaycast_Options
+  - ToRaycast_QuitGame
+  - ToRaycast_QuitRequestYes
+  - ToRaycast_QuitRequestNo
+  - ScrollBox
+  - ToRaycast_Level_0
+  - ToRaycast_Level_1
+  - ToRaycast_Level_2
+  - ToRaycast_Level_3
+  - ToRaycast_Level_4
+  - ToRaycast_Level_5
+  - ToRaycast_Level_6
+  - ToRaycast_BackToMenu
+  - ToRaycast_Level_7
+  - ToRaycast_Level_8
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - PostProcessing
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
