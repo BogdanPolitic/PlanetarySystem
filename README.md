@@ -13,3 +13,6 @@ The game's progress depends of the current game level and the planets in the inv
 
 ![Demo](https://github.com/BogdanPolitic/Demos/blob/main/PlanetInventory.jpg?raw=true)
 
+<p align="center">
+  <img src="https://github.com/BogdanPolitic/Demos/blob/main/PlanetInventory.jpg" />
+</p>
