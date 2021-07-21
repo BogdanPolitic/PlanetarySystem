@@ -18,3 +18,15 @@ This is a short demo of planet trajectory and collisions simulation:
   
   <img src="https://github.com/BogdanPolitic/Demos/blob/main/PlanetInventory.jpg" />
 </p>
+
+<h3> Implementation details </h3>
+
+The implementation mainly focused on:
+- the planet's orbiting trajectory
+- two planets collisions
+- a well organised and good looking inventory, based on the level logic
+- a 3D menu build
+
+The trajectory of each planet is calculated by filtering the user's mouse input. Since the input is likely to be spiky and discontinuous, the best solution approximates the input to a smooth, uniform, convex and closed curve (similar to a Bezier curve).
+
+The collision between two planets is predetermined by faking the colliders of each planet, placing them ahead, and detect collision one framecount before the actual collision happens. When the ghost colliders trigger - it means the planets will collider next frame - the planets already start the disintegration process. On the next frame, Unity's physical colliders apply directly to the planet fragments.
