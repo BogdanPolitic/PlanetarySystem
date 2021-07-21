@@ -30,3 +30,7 @@ The implementation mainly focused on:
 The trajectory of each planet is calculated by filtering the user's mouse input. Since the input is likely to be spiky and discontinuous, the best solution approximates the input to a smooth, uniform, convex and closed curve (similar to a Bezier curve).
 
 The collision between two planets is predetermined by faking the colliders of each planet, placing them ahead, and detect collision one framecount before the actual collision happens. When the ghost colliders trigger - it means the planets will collider next frame - the planets already start the disintegration process. On the next frame, Unity's physical colliders apply directly to the planet's fragments. There are two phases of disintegration: the fragment splitting and the fragment's burning to become cosmic dust.
+
+<p align="center">
+  <img src="https://github.com/BogdanPolitic/Demos/blob/main/ciocnire_planeta_fragment.png" />
+</p>
