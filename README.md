@@ -10,3 +10,6 @@ The player's final task is to manage the space of each planetary system so that 
 The game's progress depends of the current game level and the planets in the inventory. A minimum number of planets is required for each system to be completed. The broken planets obviously lose the count. If the player ends up with 0 planets in their invetory, the game is lost.
 
 ![Demo](https://github.com/BogdanPolitic/Demos/blob/main/Planetary-System-demo.gif?raw=true)
+
+![Demo](https://github.com/BogdanPolitic/Demos/blob/main/PlanetInventory.jpg?raw=true)
+
