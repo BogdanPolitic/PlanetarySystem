@@ -26,6 +26,7 @@ TagManager:
   - ToRaycast_BackToMenu
   - ToRaycast_Level_7
   - ToRaycast_Level_8
+  - RewardsText
   layers:
   - Default
   - TransparentFX

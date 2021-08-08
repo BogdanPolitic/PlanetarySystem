@@ -17,7 +17,7 @@ public class ScrollMechanics : MonoBehaviour
         }
     }
 
-    class Materials
+    public class Materials
     {
         public Material defaultMaterial;
         public Material topDropdownMaterial;
@@ -34,6 +34,8 @@ public class ScrollMechanics : MonoBehaviour
             end = _end;
         }
     }
+
+    private static ScrollMechanics instance;
 
     GameObject box;
     GameObject scrollCursor;
@@ -53,13 +55,13 @@ public class ScrollMechanics : MonoBehaviour
     const int OFFSET_CUT_TOP = 1;
 
     Materials boxMaterials;
-    Materials[] textMaterials;
+    public Materials[] textMaterials;
 
-    PBRNoiseOffsetY TOP_CUT_BOX = new PBRNoiseOffsetY(-13.3f, -12.2f);
-    PBRNoiseOffsetY BOTTOM_CUT_BOX = new PBRNoiseOffsetY(-80.7f, -79.6f);
+    PBRNoiseOffsetY TOP_CUT_BOX = new PBRNoiseOffsetY(0.5f, 1.0f);
+    PBRNoiseOffsetY BOTTOM_CUT_BOX = new PBRNoiseOffsetY(0.0f, 0.5f);
 
-    PBRNoiseOffsetY TOP_CUT_TEXT = new PBRNoiseOffsetY(-13.6f, -12.2f);
-    PBRNoiseOffsetY BOTTOM_CUT_TEXT = new PBRNoiseOffsetY(-81.1f, -79.6f);
+    PBRNoiseOffsetY TOP_CUT_TEXT = new PBRNoiseOffsetY(0.5f, 1.0f);
+    PBRNoiseOffsetY BOTTOM_CUT_TEXT = new PBRNoiseOffsetY(0.0f, 0.5f);
 
     ButtonObject[] levels;
 
@@ -157,19 +159,16 @@ public class ScrollMechanics : MonoBehaviour
         return Mathf.Min(Mathf.Max(0, rawCalculation), NUMBER_OF_LEVELS - WINDOW_SIZE);
     }
 
-    void Start()
+    public static ScrollMechanics GetInstance()
     {
-        GenericButtonListener.InitializeButtons();
+        return instance;
+    }
 
-        box = GameObject.Find("ScrollBarBox");
-        scrollCursor = GameObject.Find("ScrollBarCursor");
-
-        button = GenericButtonListener.buttonsMap[GenericButtonListener.LOAD_LEVEL_0_BUTTON.id];
-        scrollCursor.transform.position = PositionWithOffset(button.toggleAxis, button.greaterCoord);
-        scrollCursor.transform.position = ScrollThingTopPosition(scrollCursor.transform.position);
+    private void Awake()
+    {
+        instance = this;
 
         levels = new ButtonObject[NUMBER_OF_LEVELS];
-
         for (int idx = 0; idx < NUMBER_OF_LEVELS; idx++)
         {
             levels[idx] = new ButtonObject(
@@ -178,6 +177,7 @@ public class ScrollMechanics : MonoBehaviour
                 GameObject.Find("Level_" + idx + "Text")
             );
         }
+
         boxMaterials = new Materials();
         boxMaterials.defaultMaterial = Resources.Load("MaterialsReferencedInScripts/TransparentTextBoxMat") as Material;
         boxMaterials.topDropdownMaterial = Resources.Load("MaterialsReferencedInScripts/TopDecomposeTexMat") as Material;
@@ -190,6 +190,29 @@ public class ScrollMechanics : MonoBehaviour
             textMaterials[idx].defaultMaterial = Resources.Load("MaterialsReferencedInScripts/TextsFade/Level_" + idx + "/DefaultMat") as Material;
             textMaterials[idx].topDropdownMaterial = Resources.Load("MaterialsReferencedInScripts/TextsFade/Level_" + idx + "/TopDecomposeMat") as Material;
             textMaterials[idx].bottomDropdownMaterial = Resources.Load("MaterialsReferencedInScripts/TextsFade/Level_" + idx + "/BottomDecomposeMat") as Material;
+        }
+    }
+
+    void Start()
+    {
+        GenericButtonListener.InitializeButtons();
+
+        box = GameObject.Find("ScrollBarBox");
+        scrollCursor = GameObject.Find("ScrollBarCursor");
+
+        button = GenericButtonListener.buttonsMap[GenericButtonListener.LOAD_LEVEL_0_BUTTON.id];
+        scrollCursor.transform.position = PositionWithOffset(button.toggleAxis, button.greaterCoord);
+        scrollCursor.transform.position = ScrollThingTopPosition(scrollCursor.transform.position);
+
+        // There is a strange bug involved if we don't set the level gameObjects to inactive.
+        // The bug affects the first two buttons (Level 0 and Level 1),
+        // in the matter that both will keep the original black text material (the prefab material) until they go inactive and active back again.
+        // The solution is to probably never assign materials to active gameObjects, but to activate them the next frame? Who knows...
+        for (int idx = 0; idx < NUMBER_OF_LEVELS; idx++)
+        {
+            levels[idx]
+                .parent
+                .SetActive(false);
         }
     }
 
@@ -277,6 +300,7 @@ public class ScrollMechanics : MonoBehaviour
 
         unquantifyableOffset = (Mathf.Ceil(levelsHiddenBelow) - levelsHiddenBelow) * Y_STEP;
 
+        
         for (int idx = 0; idx < NUMBER_OF_LEVELS; idx++)
         {
             int fadeModeOffset = IsCompletelyVisible(idx) ? 0 :

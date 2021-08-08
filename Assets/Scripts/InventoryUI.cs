@@ -93,12 +93,12 @@ public class InventoryUI : MonoBehaviour
         if (!MainSceneUI.isIntoInventory())
             return;
 
-        currentPlanetTexture = (Texture)Resources.Load(SceneParameters.currentPlanet.pathToImage);
+        currentPlanetTexture = (Texture)Resources.Load(LevelParameters.currentPlanet.pathToImage);
 
         //GUI.DrawTexture(new Rect(10, 10, 150, 150), aTexture, ScaleMode.ScaleToFit, true, 1.0F);
 
         Rect currentPlanetRect = new Rect(screenWidth * 0.05f, screenHeight * 0.025f, screenWidth * 0.9f, screenHeight * 0.2f);
-        GUI.Window(2, currentPlanetRect, currentPlanetWindow, "Current planet : " + SceneParameters.currentPlanet.name);
+        GUI.Window(2, currentPlanetRect, currentPlanetWindow, "Current planet : " + LevelParameters.currentPlanet.name);
 
         float planetSectionWidth = screenWidth * 0.3f;
         float planetSectionHeight = screenHeight * 0.25f;

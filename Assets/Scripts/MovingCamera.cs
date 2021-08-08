@@ -141,7 +141,7 @@ public class MovingCamera : MonoBehaviour
         float norm = (stopPoint - new Vector2(transform.position.x, transform.position.z)).magnitude;
         float slowDownFactor = norm < 1 && side == UPWARDS ? norm : 1;
         //slowDownFactor = logarithmicEnding == 0 && (circle[index] - center3d).magnitude < (equationCircle[index] - center3d).magnitude ? slowDownFactor : slowDownFactor * logarithmicEnding / 8; // stiu ca normal trebuia / 4, but to slow the y-axis ascending moe
-        slowDownFactor = slowDownFactor < 0.001f ? 0 : slowDownFactor;
+        slowDownFactor = slowDownFactor < 0.001f ? 0 : slowDownFactor * 0.7f;
 
         float x = circle[index].x + deltaHeight * speed * (equationCircle[index].x - stopPoint.x) * slowDownFactor;
         float z = circle[index].z + deltaHeight * speed * (equationCircle[index].z - stopPoint.y) * slowDownFactor;
@@ -186,8 +186,8 @@ public class MovingCamera : MonoBehaviour
 
     void Start()
     {
-        circle = HorizontalCircle(8, 2, center3d, 199);
-        equationCircle = HorizontalCircle(8, lowestHeight, center3d, 199);
+        circle = HorizontalCircle(8, 2, center3d, 499);
+        equationCircle = HorizontalCircle(8, lowestHeight, center3d, 499);
         ActualizeTransform(0); // initial
 
         if (showLowestHeight)

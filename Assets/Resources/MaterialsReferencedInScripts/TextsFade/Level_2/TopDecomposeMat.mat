@@ -24,6 +24,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: e6e48a0b153fe6d4c9328a61a77e0625, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - Texture2D_74681556091c440fa7c1c612b964f164:
+        m_Texture: {fileID: 2800000, guid: d4fdb3a7c57cf4d4b9a1d596b0f723ec, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: a4fec88beeeb98a4781acf48f5438561, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -42,6 +46,6 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats: []
     m_Colors:
-    - DropdownFade: {r: -30.5, g: -13.375008, b: 0, a: 0}
+    - DropdownFade: {r: 0, g: 0.50742984, b: 0, a: 0}
     - HighlightedColor: {r: 0.7490196, g: 0.03137255, b: 0, a: 0}
   m_BuildTextureStacks: []

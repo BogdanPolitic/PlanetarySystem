@@ -16,7 +16,7 @@ public class Level_5_listener : MonoBehaviour
         if (GenericButtonListener.locked)
             return;
         if (characteristics == null)
-            characteristics = buttonListener.BeforeFirstFrame(gameObject.name);
-        buttonListener.RequestUpdate(characteristics.buttonHash, characteristics.currentTag, characteristics.box, characteristics.glowingText);
+            characteristics = buttonListener.GetButtonCharacteristics(gameObject.name);
+        buttonListener.RequestUpdate(characteristics.buttonHash, characteristics.currentTag, characteristics.box, characteristics.glowingText, characteristics.availableLevelOrNoLevelButton);
     }
 }

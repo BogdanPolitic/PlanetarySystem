@@ -20,6 +20,10 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - Texture2D_bfef19d8df54411a8c0fdc67d71b9d95:
+        m_Texture: {fileID: 2800000, guid: d4fdb3a7c57cf4d4b9a1d596b0f723ec, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _BaseMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -61,6 +65,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
+    - Vector1_9abbe8065f4f4bc6ac7b440841c323df: 1.14
     - _AlphaClip: 0
     - _Blend: 0
     - _BumpScale: 1
@@ -83,7 +88,7 @@ Material:
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - DropdownFade: {r: -202.54, g: -80.68024, b: 0, a: 0}
+    - DropdownFade: {r: 0, g: 0.12120855, b: 0, a: 0}
     - _BaseColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _Color: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}

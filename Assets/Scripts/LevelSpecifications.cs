@@ -63,13 +63,16 @@ public class LevelSpecification : MonoBehaviour
     public static void changeToLevel(int level)
     {
         LevelSpec currentLevel = levelSpecs[level];
-        SceneParameters.currentLevel = level;
-        SceneParameters.mapDimension = currentLevel.mapDimension;
-        SceneParameters.totalTime = currentLevel.totalTime;
-        SceneParameters.requiredNumberOfPlanets = currentLevel.requiredNumberOfPlanets;
+        LevelParameters.currentLevel = level;
+        LevelParameters.mapDimension = currentLevel.mapDimension;
+        LevelParameters.totalTime = currentLevel.totalTime;
+        LevelParameters.requiredNumberOfPlanets = currentLevel.requiredNumberOfPlanets;
+        LevelParameters.numberOfPlanetsLeft = LevelParameters.requiredNumberOfPlanets;
 
-        LoadMeteors.r = SceneParameters.mapDimension;
-        LoadMeteors.R = SceneParameters.mapDimension * 1.25f;
-        LoadMeteors.height = SceneParameters.mapDimension * 0.25f;
+        LevelParameters.gameWon = false;    // Reset to the gameWon status from the last game.
+
+        LoadMeteors.r = LevelParameters.mapDimension;
+        LoadMeteors.R = LevelParameters.mapDimension * 1.25f;
+        LoadMeteors.height = LevelParameters.mapDimension * 0.25f;
     }
 }

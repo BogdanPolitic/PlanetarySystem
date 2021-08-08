@@ -70,6 +70,7 @@ public class PathReader1 : MonoBehaviour
         public Inventory.PlanetStack item;
         public GameObject planet;
         public GameObject collisionChecker;
+        public GameObject trajectoryRenderer;
         public Vector3[] trajectory;
         public int rotationIndex;
         public bool deleteMark;
@@ -78,11 +79,12 @@ public class PathReader1 : MonoBehaviour
         public RenderSwitch switchRendering;
         public int startFrame;
         public Vector3 lastFrameVelocity;
-        public Planet(Inventory.PlanetStack _item, GameObject _planet, Vector3[] _trajectory, int _rotationIndex, int _orderIndex, int _startFrame, int _ordIdx)
+        public Planet(Inventory.PlanetStack _item, GameObject _planet, GameObject _trajRenderer, Vector3[] _trajectory, int _rotationIndex, int _orderIndex, int _startFrame, int _ordIdx)
         {
             item = _item;
             planet = _planet;
             planet.SetActive(true);
+            trajectoryRenderer = _trajRenderer;
             trajectory = _trajectory;
             rotationIndex = _rotationIndex;
             deleteMark = false;
@@ -168,6 +170,7 @@ public class PathReader1 : MonoBehaviour
     {
         public GameObject hs;
         public GameObject collisionChecker;
+        public GameObject parentTrajRenderer;
         public int createdAtFrame;
         public Vector3 lastFrameVelocity;
         public float fade;
@@ -177,7 +180,7 @@ public class PathReader1 : MonoBehaviour
         private const int DESTRUCTION_END = 10;     // seconds
         public float fadeUnity = (DESTRUCTION_END - DESTRUCTION_START) * Time.deltaTime;
 
-        public Halfsphere(GameObject _hs, Inventory.PlanetStack fromPlanetItem, int _ordIdx)
+        public Halfsphere(GameObject _hs, Inventory.PlanetStack fromPlanetItem, GameObject _parentTrajRenderer, int _ordIdx)
         {
             hs = _hs;
 
@@ -190,6 +193,8 @@ public class PathReader1 : MonoBehaviour
 
             hs.GetComponent<Rigidbody>().mass = 1 + (float) _ordIdx / 100;
             collisionChecker.GetComponent<Rigidbody>().mass = 1 + (_ordIdx + 0.5f) / 100;
+
+            parentTrajRenderer = _parentTrajRenderer;
 
             createdAtFrame = realFrameCount;
             lastFrameVelocity = Vector3.zero;
@@ -217,7 +222,8 @@ public class PathReader1 : MonoBehaviour
     {
         public GameObject hs1;
         public GameObject hs2;
-        public HalfspherePair(Inventory.PlanetStack fromPlanetItem)
+        public GameObject parentTrajRenderer;
+        public HalfspherePair(Inventory.PlanetStack fromPlanetItem, GameObject _parentTrajRenderer)
         {
             string sourcePlanetName = fromPlanetItem.name;
 
@@ -230,6 +236,8 @@ public class PathReader1 : MonoBehaviour
             hs2.transform.Rotate(90, 0, 0);
             Texture hs2Tex = Resources.Load("PlanetSurfaces/Half/top_half_" + sourcePlanetName) as Texture;
             hs2.GetComponent<MeshRenderer>().material.mainTexture = hs2Tex;
+
+            parentTrajRenderer = _parentTrajRenderer;
         }
     }
 
@@ -759,7 +767,7 @@ public class PathReader1 : MonoBehaviour
     HalfspherePair Disintegrate(Planet planet, Vector3 velocity)
     {
         GameObject gameObj = planet.planet;
-        HalfspherePair hsPair = new HalfspherePair(planet.item);
+        HalfspherePair hsPair = new HalfspherePair(planet.item, planet.trajectoryRenderer);
         RotationAlongVelocitySide1(hsPair.hs1, velocity);
         RotationAlongVelocitySide2(hsPair.hs2, velocity);
         
@@ -790,6 +798,9 @@ public class PathReader1 : MonoBehaviour
             if (!planet.deleteMark)
             {
                 afterDeletion.Add(planet);
+            } else
+            {
+                Inventory.PlanetConsumedIntoFailure(planet.item.name);  // The planet failed, so it was consumed but provided no benefit.
             }
         }
         return afterDeletion;
@@ -1084,8 +1095,8 @@ public class PathReader1 : MonoBehaviour
 
         if (!cursorPlanetTexAssigned)
         {
-            cursorPlanet.transform.localScale = Vector3.one * (SceneParameters.currentPlanet.size / 10.0f);
-            Texture planetTex = Resources.Load("PlanetSurfaces/Unit/" + SceneParameters.currentPlanet.name) as Texture;
+            cursorPlanet.transform.localScale = Vector3.one * (LevelParameters.currentPlanet.size / 10.0f);
+            Texture planetTex = Resources.Load("PlanetSurfaces/Unit/" + LevelParameters.currentPlanet.name) as Texture;
             cursorPlanet.GetComponent<MeshRenderer>().material.mainTexture = planetTex;
 
             cursorPlanetTexAssigned = true;
@@ -1095,18 +1106,30 @@ public class PathReader1 : MonoBehaviour
 
 
         if (Input.touchCount >= 0)  // touchCount se refera doar la touch-urile de pe touchScreen. Daca esti pe PC va fi mereu 0, chiar si la apasarea mouse-ului!
+        // Handling-ul conditiei !LevelParameters.equilibriumActivated trebuie setat exact in acelasi mod si in cazul de Input.touchCount (adica in cazul platformei mobile)!
         {
             //if (Input.GetTouch(0).phase == TouchPhase.Began)
             if (Input.GetMouseButtonDown(0))
             {
-                markers = new List<Vector3>();
+                /*if (!LevelParameters.equilibriumActivated)
+                    markers = new List<Vector3>();
+                else
+                    Notifications.AddNotification(Notifications.NotificationType.MAX_AMOUNT_PLANETS);*/
+
+                if (LevelParameters.equilibriumActivated)
+                    Notifications.AddNotification(Notifications.NotificationType.MAX_AMOUNT_PLANETS);
+                else if (Inventory.numberOfNonEmptyStacks == 0)
+                    Notifications.AddNotification(Notifications.NotificationType.EMPTY_INVENTORY);
+                else
+                    markers = new List<Vector3>();
             }
         }
 
         if (Input.touchCount >= 0)
+        // Handling-ul conditiei !LevelParameters.equilibriumActivated trebuie setat exact in acelasi mod si in cazul de Input.touchCount (adica in cazul platformei mobile)!
         {
             //if (Input.GetTouch(0).phase == TouchPhase.Stationary || Input.GetTouch(0).phase == TouchPhase.Moved)
-            if (Input.GetMouseButton(0)) // drawing
+            if (Input.GetMouseButton(0) && !LevelParameters.equilibriumActivated && Inventory.numberOfNonEmptyStacks > 0) // drawing
             {
                 RaycastHit hit;
                 Ray ray = FindObjectOfType<Camera>().ScreenPointToRay(Input.mousePosition);
@@ -1121,9 +1144,10 @@ public class PathReader1 : MonoBehaviour
         }
 
         if (Input.touchCount >= 0)
+        // Handling-ul conditiei !LevelParameters.equilibriumActivated trebuie setat exact in acelasi mod si in cazul de Input.touchCount (adica in cazul platformei mobile)!
         {
             //if (Input.GetTouch(0).phase == TouchPhase.Ended)
-            if (Input.GetMouseButtonUp(0))
+            if (Input.GetMouseButtonUp(0) && !LevelParameters.equilibriumActivated && Inventory.numberOfNonEmptyStacks > 0)
             { // computing -- mai intai fac dispersia
 
                 //SetTrajectoryHeight(markers, 0);  -- PENTRU 3D NU MAI E NEVOIE DE ASTA!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1213,14 +1237,19 @@ public class PathReader1 : MonoBehaviour
                     markersXV = PointsAtUniformDistance(VectorToList(markersXV)); // CU dispersie SI interp liniara
 
                     markersXV = SmoothenBounds(markersXV, smootheningFactor);
-                    trajsLst.Add(ShowTrajectory(markersXV, Color.green));
+                    GameObject trajRendererObject = ShowTrajectory(markersXV, Color.green);
+                    trajsLst.Add(trajRendererObject);
 
                     // WE HAVE THE TRAJECTORY: MARKERSXV.
-                    Inventory.takeItemOfType(SceneParameters.currentPlanet.name);
+
+                    Inventory.takeItemOfType(LevelParameters.currentPlanet.name);
+                    Inventory.PlanetConsumed(LevelParameters.currentPlanet.name);  // We first assume that each planet taken from the inventory was consumed into success.
+                    // If the planet ends in collision, we take -2 so that we show the planet was consumed into failure.
 
                     memory.Add(new Planet(
-                        SceneParameters.selectCurrentPlanetAndGoToNext(),   // returneaza item-ul planetei curente si alege random item-ul pentru planeta urmatoare (practic FIX AICI se decide care va fi planeta urmatoare)
+                        LevelParameters.selectCurrentPlanetAndGoToNext(),   // returneaza item-ul planetei curente si alege random item-ul pentru planeta urmatoare (practic FIX AICI se decide care va fi planeta urmatoare)
                         Instantiate(planetObject), 
+                        trajRendererObject,
                         markersXV, 
                         0, 
                         indexx++, 
@@ -1260,6 +1289,7 @@ public class PathReader1 : MonoBehaviour
             {
                 Destroy(hs.hs);
                 Destroy(hs.collisionChecker);
+                Destroy(hs.parentTrajRenderer);
                 hs.deleteMark = true;
             }
             hs.hs.gameObject.GetComponent<MeshRenderer>().material.SetFloat("_Fade", hs.fade);
@@ -1295,8 +1325,8 @@ public class PathReader1 : MonoBehaviour
             if (planetObj.deleteMark && !planetObj.switchRendering.allowed)
             {
                 planetObj.planet.GetComponent<Rigidbody>().velocity = MotionToVelocity(planetObj.trajectory, planetObj.rotationIndex); // aceeasi viteza ca mai inainte, dar de data asta dreapta si continua, nu discreta, generata de inertie, atunci cand planeta paraseste orbita
-                Halfsphere hs1 = new Halfsphere(planetObj.collisionParticles.hs1, planetObj.item, ordIdx++);
-                Halfsphere hs2 = new Halfsphere(planetObj.collisionParticles.hs2, planetObj.item, ordIdx++);
+                Halfsphere hs1 = new Halfsphere(planetObj.collisionParticles.hs1, planetObj.item, planetObj.collisionParticles.parentTrajRenderer, ordIdx++);
+                Halfsphere hs2 = new Halfsphere(planetObj.collisionParticles.hs2, planetObj.item, planetObj.collisionParticles.parentTrajRenderer, ordIdx++);
                 // vom seta pozitia initiala a planetelor fantoma. NU setez velocity, deoarece e bine ca ele sa se deplaseze discret, updatandu-si pozitia in functie de pozitia planetelor nefantoma de care apartin.
                 hs1.collisionChecker.transform.position = hs1.hs.transform.position + hs1.hs.GetComponent<Rigidbody>().velocity * Time.deltaTime;
                 hs2.collisionChecker.transform.position = hs2.hs.transform.position + hs2.hs.GetComponent<Rigidbody>().velocity * Time.deltaTime;
@@ -1337,8 +1367,8 @@ public class PathReader1 : MonoBehaviour
                 //if (freeMotionPlanet.collisionChecker.GetComponent<Checker>().collidedWithPlanet) // (14.03.2020)
                 {
                     HalfspherePair pair = Disintegrate(orbitingPlanet, MotionToVelocity(orbitingPlanet.trajectory, orbitingPlanet.rotationIndex));
-                    Halfsphere hs1 = new Halfsphere(pair.hs1, orbitingPlanet.item, ordIdx++);
-                    Halfsphere hs2 = new Halfsphere(pair.hs2, orbitingPlanet.item, ordIdx++);
+                    Halfsphere hs1 = new Halfsphere(pair.hs1, orbitingPlanet.item, pair.parentTrajRenderer, ordIdx++);
+                    Halfsphere hs2 = new Halfsphere(pair.hs2, orbitingPlanet.item, pair.parentTrajRenderer, ordIdx++);
                     // ne trebuie pozitia, pentru a verifica in bucla urmatoare, in if, variabila collided (in scriptul celalalt se va detecta sau nu ciocnirea, deci trebuie neaparat pozitia curenta a fantomei inca de acum).
                     hs1.collisionChecker.transform.position = hs1.hs.transform.position + hs1.hs.GetComponent<Rigidbody>().velocity * Time.deltaTime;
                     hs2.collisionChecker.transform.position = hs2.hs.transform.position + hs2.hs.GetComponent<Rigidbody>().velocity * Time.deltaTime;

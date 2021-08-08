@@ -5,6 +5,8 @@ using UnityEditor;
 
 public class RotateBase : MonoBehaviour
 {
+    private static RotateBase instance;
+
     public GUISkin sliderBoxStyle;
     private bool GUIwasSetup;
     private Rect windowRect0;
@@ -27,13 +29,30 @@ public class RotateBase : MonoBehaviour
     const int VISIBLE_FOR_FRAMES = 200;
     private bool invisible;
 
-    private float divWidth = 3.5f;
-    //private float divHeight = 4.35f;
-    private float divHeight = 3.35f;
-    private float widthSize = 0.69f;
-    private float heightSize = 0.03f;
+    private bool hiddenUI;
 
     GameObject guidingQuad;
+
+    public static RotateBase GetInstance()
+    {
+        return instance;
+    }
+
+    public void ShowUI()
+    {
+        hiddenUI = false;
+    }
+
+    public void HideUI()
+    {
+        hiddenUI = true;
+    }
+
+    private void Awake()
+    {
+        instance = this;
+        hiddenUI = true;
+    }
 
     void Start()
     {
@@ -53,7 +72,7 @@ public class RotateBase : MonoBehaviour
 
     private void OnGUI()
     {
-        if (MainSceneUI.isIntoInventory())
+        if (MainSceneUI.isIntoInventory() || hiddenUI)
             return;
 
         if (!GUIwasSetup)
@@ -65,12 +84,12 @@ public class RotateBase : MonoBehaviour
         var screenWidth = Screen.width;
         var screenHeight = Screen.height;
 
-        var windowWidth = screenWidth / divWidth;
-        var windowHeight = screenHeight / divHeight;
-        var windowX = screenWidth * widthSize;
-        var windowY = screenHeight * heightSize;
+        var windowWidth = screenWidth * ValueSheet.rotateBaseWindowDimensionX;
+        var windowHeight = screenHeight * ValueSheet.rotateBaseWindowDimensionY;
+        var windowX = screenWidth * ValueSheet.rotateBaseWindowPositionX;
+        var windowY = screenHeight * ValueSheet.rotateBaseWindowPositionY;
 
-        windowRect0 = new Rect(windowX, windowY, windowWidth, windowHeight);
+        windowRect0 = new Rect(windowX - windowWidth / 2.0f, windowY - windowHeight / 2.0f, windowWidth, windowHeight);
         GUILayout.Window(0, windowRect0, SliderBoxForm, "Change orbit angle");
     }
 

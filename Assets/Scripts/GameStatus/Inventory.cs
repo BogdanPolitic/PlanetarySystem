@@ -29,8 +29,24 @@ public class Inventory : MonoBehaviour
         }
     }
 
+    /*public class LevelNumberOfPlanetsProgress
+    {
+        public int initial;
+        public int final;
+
+        public LevelNumberOfPlanetsProgress(int initial, int final)
+        {
+            this.initial = initial;
+            this.final = final;
+        }
+    }*/
+
+
     public static Dictionary<string, PlanetStack> inventory = null;
     public static int numberOfNonEmptyStacks;
+
+    private static Dictionary<string, int> levelInventoryAccounting = null;
+    public static Dictionary<string, int> planetStackRewards = null;
 
     // error codes for local functions:
     public const int NO_SUCH_PLANET = -1;
@@ -43,6 +59,9 @@ public class Inventory : MonoBehaviour
 
         inventory = new Dictionary<string, PlanetStack>();
         numberOfNonEmptyStacks = 0;
+
+        levelInventoryAccounting = new Dictionary<string, int>();
+        planetStackRewards = new Dictionary<string, int>();
 
         inventory["earth"] = new PlanetStack("earth",
                                             "PlanetSurfaces/3D_Projections/earth_spheric",
@@ -159,5 +178,76 @@ public class Inventory : MonoBehaviour
 
         inventory[planetName].quantity++;
         return 0;
+    }
+
+
+
+    // For each planet that ended up in equilibrium, it's a plus (+) for that PlanetStack. For each planet that ended up in collision, it's a minus (-) for that PlanetStack.
+    // (+)es and (-)es can even out.
+    // To be called at the beginning of each level.
+    public static void BeginLevelAccounting()
+    {
+        foreach (string planetStr in inventory.Keys)
+        {
+            levelInventoryAccounting[planetStr] = 0;
+            planetStackRewards[planetStr] = 0;
+        }
+    }
+
+    public static void PlanetConsumed(string stackName)
+    {
+        levelInventoryAccounting[stackName] += 1;
+    }
+
+    public static void PlanetConsumedIntoFailure(string stackName)
+    {
+        levelInventoryAccounting[stackName] -= 2;
+    }
+
+    // To be called at the end (upon the completion) of each level.
+    public static void CalculateLevelRewards()
+    {
+        int sumOfStackProgress = 0;
+        int numberOfProgressStacks = 0;
+
+        foreach (int stackProgress in levelInventoryAccounting.Values)
+        {
+            if (stackProgress > 0)
+            {
+                sumOfStackProgress += stackProgress;
+                numberOfProgressStacks++;
+            }
+        }
+
+        if (sumOfStackProgress == 0)    // Poor gameplay. No rewards for this level! The reward claiming screen will still show, but 0 planets of each stack will be given.
+            return;
+
+        int numberOfPlanetsAsReward = LevelParameters.totalPoints / ValueSheet.totalPlanetsRewardDiv;
+        for (int rewardPlanetIdx = 0; rewardPlanetIdx < numberOfPlanetsAsReward; rewardPlanetIdx++)
+        {
+            planetStackRewards[ChooseRandomStackByProbability(sumOfStackProgress)]++;
+        }
+
+        AnimatedRewardClaims.GetInstance().UpdatePlanetRewards();
+    }
+
+    private static string ChooseRandomStackByProbability(int sumStacks)
+    {
+        int randomNumber = RNG.getRandomInt(1, sumStacks);
+        int iterationSum = 0;
+
+        foreach (string stackProgress in levelInventoryAccounting.Keys)
+        {
+            if (levelInventoryAccounting[stackProgress] <= 0)
+                continue;
+
+            if (randomNumber >= iterationSum + 1 && randomNumber <= iterationSum + levelInventoryAccounting[stackProgress])
+            {
+                return stackProgress;
+            }
+            iterationSum += levelInventoryAccounting[stackProgress];
+        }
+
+        return null;    // Should never be reached. If it does, either this function or the CalculateLevelRewards() has a bug.
     }
 }

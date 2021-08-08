@@ -12,14 +12,15 @@ public class RNG : MonoBehaviour
         if (inf > sup)
             return 0;
 
-        float randomFloat = 0;
+        float randomFloat = getRandomFloat(inf, sup + 0.9999f);
+        randomFloat -= randomFloat % 1;
 
-        do
+        /*do
         {
             randomFloat = getRandomFloat(0, 10);
             randomFloat -= randomFloat % 1;
         }
-        while (!(inf <= randomFloat && randomFloat <= sup));
+        while (!(inf <= randomFloat && randomFloat <= sup));*/
 
         return (int) randomFloat;
     }

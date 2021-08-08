@@ -24,11 +24,28 @@ Material:
         m_Texture: {fileID: 2800000, guid: 428a41e709023c74d9230bb7ddbd661f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - Texture2D_74681556091c440fa7c1c612b964f164:
+        m_Texture: {fileID: 2800000, guid: d4fdb3a7c57cf4d4b9a1d596b0f723ec, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: f5000733e518e2949a0e13e5c73c7d68, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Floats: []
     m_Colors:
-    - DropdownFade: {r: -30.5, g: -12.75, b: 0, a: 0}
+    - DropdownFade: {r: 0, g: 0.5, b: 0, a: 0}
     - HighlightedColor: {r: 0.7490196, g: 0.03137255, b: 0, a: 0}
+  m_BuildTextureStacks: []

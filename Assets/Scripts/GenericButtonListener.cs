@@ -66,12 +66,20 @@ public class GenericButtonListener : MonoBehaviour
         public string currentTag;
         public GameObject box;
         public GameObject glowingText;
+        public bool availableLevelOrNoLevelButton; // false - if it's an UNavailable level; true - if it's an available level OR a button that does NOT represent a level (f.e. the "New Game" button).
+        // In short, buttons with (availableLevelOrNoLevelButton == true) should have red text, and the other ones should have black text.
+
         public ObjectCharacteristics(int _buttonHash, string _currentTag, GameObject _box, GameObject _glowingText)
         {
             buttonHash = _buttonHash;
             currentTag = _currentTag;
             box = _box;
             glowingText = _glowingText;
+
+            availableLevelOrNoLevelButton = 
+                (_buttonHash < level0Index || _buttonHash >= level0Index + numberOfLevels)  // It's not a level load button.
+                || (_buttonHash - level0Index <= LevelParameters.maxReachedLevel + 1);      // It's a level load button AND it's an available level to choose.
+            // LevelParameters.maxReachedLevel + 1 because you can access the next level to the highest one that you succeeded.
         }
     }
 
@@ -81,9 +89,8 @@ public class GenericButtonListener : MonoBehaviour
     GameObject quad;
     GameObject glowingText;
     static Camera currentCamera; // the one and only camera
-    float init_r;
-    float init_g;
-    float init_b;
+    Color availableButtonTextColor;
+    Color unavailableButtonTextColor;
 
     const int NUMBER_OF_DIRECTIONS = 6; // numarul 6 nu are legatura cu valorile constantelor de mai jos, ci reprezinta numarul lor (exceptand NOWHERE)
     // urmatoarele constante reprezinta identificatori de destinatii (locuri) din meniu. Butoanele care au ca destinatie una din ele, vor purta fix acel identificator.
@@ -138,15 +145,21 @@ public class GenericButtonListener : MonoBehaviour
 
     static float rotationTime;
 
-    void SetTextIntensity(GameObject glowingText, float intensity)
+    // For color initializing purposes only.
+    [SerializeField] Material buttonTextMaterial;
+
+    void SetTextIntensity(GameObject glowingText, float intensity, bool availableButtonText)
     {
+        Color initialColor = availableButtonText
+            ? availableButtonTextColor
+            : unavailableButtonTextColor;
         Color highlightedColor = glowingText.GetComponent<MeshRenderer>().material.GetColor("HighlightedColor");
         if (highlightedColor != null)
         {
             float factor = Mathf.Pow(2, intensity);
-            highlightedColor.r = init_r * factor;
-            highlightedColor.g = init_g * factor;
-            highlightedColor.b = init_b * factor;
+            highlightedColor.r = initialColor.r * factor;
+            highlightedColor.g = initialColor.g * factor;
+            highlightedColor.b = initialColor.b * factor;
             glowingText.GetComponent<MeshRenderer>().material.SetColor("HighlightedColor", highlightedColor);
         }
     }
@@ -272,6 +285,16 @@ public class GenericButtonListener : MonoBehaviour
         return intention.from;
     }
 
+    private void Awake()
+    {
+        availableButtonTextColor = new Color(
+            buttonTextMaterial.GetColor("HighlightedColor").r,
+            buttonTextMaterial.GetColor("HighlightedColor").g,
+            buttonTextMaterial.GetColor("HighlightedColor").b
+        );
+        unavailableButtonTextColor = ValueSheet.unavailableLevelButtonTextColor;
+    }
+
     public static void InitializeButtons()              // in mod normal asta era metoda Start(), dar ne trebuie initializarea lui buttonsMap in metoda Start() din ScrollMechanics
     {
         buttonsMap = new Button[NUMBER_OF_BUTTONS];
@@ -299,9 +322,9 @@ public class GenericButtonListener : MonoBehaviour
 
         currentCamera = FindObjectOfType<Camera>();
         //intention = new Intention(MENU);
-        intention = new Intention(SceneParameters.returnMenuPath);
+        intention = new Intention(LevelParameters.returnMenuPath);
 
-        if (SceneParameters.returnMenuPath == LOAD_GAME)
+        if (LevelParameters.returnMenuPath == LOAD_GAME)
         {
             currentCamera.transform.rotation = Quaternion.Euler(0, 90, 0);
         }
@@ -314,25 +337,17 @@ public class GenericButtonListener : MonoBehaviour
         LevelSpecification.Initialize();
     }
 
-    public ObjectCharacteristics BeforeFirstFrame(string currentButtonName)
+    public ObjectCharacteristics GetButtonCharacteristics(string currentButtonName)
     {
         buttonHash = getButtonHash(currentButtonName);
         currentTag = "ToRaycast_" + currentButtonName;
         quad = GameObject.Find(currentButtonName + "Box");
         glowingText = GameObject.Find(currentButtonName + "Text");
 
-        Color highlightedColor = glowingText.GetComponent<MeshRenderer>().material.GetColor("HighlightedColor");
-        if (highlightedColor != null)
-        {
-            init_r = highlightedColor.r;
-            init_g = highlightedColor.g;
-            init_b = highlightedColor.b;
-        }
-
         return new ObjectCharacteristics(buttonHash, currentTag, quad, glowingText);
     }
 
-    public void RequestUpdate(int buttonHash, string currentTag, GameObject quad, GameObject glowingText)
+    public void RequestUpdate(int buttonHash, string currentTag, GameObject quad, GameObject glowingText, bool availableLevelOrNoLevelButton)
     {
         int buttonIntention = buttonsMap[buttonHash].intentionTo;
         
@@ -347,19 +362,23 @@ public class GenericButtonListener : MonoBehaviour
         if (Physics.Raycast(ray, out hit, 1000.0f) && hit.transform.tag == currentTag)
         {
             quad.transform.position = setPosition(quad.transform.position, buttonsMap[buttonHash].toggleAxis.coordWhenPressed, buttonsMap[buttonHash].toggleAxis.axis, buttonsMap[buttonHash].greaterCoord);
-            SetTextIntensity(glowingText, 1.3f);
+            SetTextIntensity(glowingText, 1.3f, availableLevelOrNoLevelButton);
 
             if (Input.GetMouseButtonDown(0))
             {
                 if (buttonHash == NEW_GAME_BUTTON.id)
                 {
                     LevelSpecification.changeToLevel(0);    // new game => level 0
-                    SceneManager.LoadScene(1);
+                    FadeManagement.GetInstance().MenuProceedToFadeOut();
                 }
                 else if (buttonHash >= level0Index && buttonHash < level0Index + numberOfLevels)
                 {
-                    LevelSpecification.changeToLevel(buttonHash - level0Index);
-                    SceneManager.LoadScene(1);
+                    int buttonLevel = buttonHash - level0Index;
+                    if (buttonLevel <= LevelParameters.maxReachedLevel + 1)
+                    {
+                        LevelSpecification.changeToLevel(buttonLevel);
+                        FadeManagement.GetInstance().MenuProceedToFadeOut();
+                    }
                 }
                 else
                 {
@@ -375,7 +394,7 @@ public class GenericButtonListener : MonoBehaviour
         else
         {
             quad.transform.position = setPosition(quad.transform.position, buttonsMap[buttonHash].toggleAxis.coordWhenReleased, buttonsMap[buttonHash].toggleAxis.axis, buttonsMap[buttonHash].greaterCoord);
-            SetTextIntensity(glowingText, 0.3f);
+            SetTextIntensity(glowingText, 0.3f, availableLevelOrNoLevelButton);
         }
     }
 }
