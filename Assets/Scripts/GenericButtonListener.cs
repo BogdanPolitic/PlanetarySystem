@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
 public class GenericButtonListener : MonoBehaviour
@@ -335,6 +336,7 @@ public class GenericButtonListener : MonoBehaviour
         locked = false;
 
         LevelSpecification.Initialize();
+        //NumberOfSecondsLeftTextEvents.instance.Initialize();
     }
 
     public ObjectCharacteristics GetButtonCharacteristics(string currentButtonName)

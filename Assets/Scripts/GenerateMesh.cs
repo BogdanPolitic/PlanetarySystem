@@ -98,7 +98,7 @@ public class GenerateMesh : MonoBehaviour
 
     void Update()
     {
-        if (MainSceneUI.isIntoInventory())
+        if (MainSceneUI.IsIntoInventory())
             return;
 
         positionVisualModifier(out x, out z, offsetFromCamera.magnitude);

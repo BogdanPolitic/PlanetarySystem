@@ -13,6 +13,9 @@ public class Notifications : MonoBehaviour
         PLANET_DESTROYED,
 
         // Warnings:
+        TRAJECTORY_NOT_ABLE_TO_CLOSE,
+        TRAJECTORY_TOO_SMALL,
+        TRAJECTORY_TOO_LARGE,
         MAX_AMOUNT_PLANETS,
         EMPTY_INVENTORY
     }
@@ -29,6 +32,7 @@ public class Notifications : MonoBehaviour
         notifications.Add(notificationType);
         if (notifications.Count > ValueSheet.maxNumberOfRecentNotifications)
             notifications.RemoveAt(0);
+        MainSceneUI.GetInstance().UpdateNotificationObjects(Mathf.Min(notifications.Count, ValueSheet.maxNumberOfFittingNotifications));
     }
 
     public static int GetCount()

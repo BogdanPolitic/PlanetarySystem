@@ -7,10 +7,16 @@ using System;
 using System.Xml;
 using System.Xml.Serialization;
 using System.IO;
-using UnityEngine.EventSystems;
+//using UnityEngine.EventSystems;
 
 public class PathReader1 : MonoBehaviour
 {
+    enum TrajectorySize
+    {
+        TOO_SMALL,
+        OK,
+        TOO_LARGE
+    }
 
     class Oposed
     {
@@ -56,11 +62,11 @@ public class PathReader1 : MonoBehaviour
 
     class AllowedShape
     {
-        public bool allowed;
+        public bool allowedToClose;
         public Vector3[] shape;
-        public AllowedShape(bool _allowed, Vector3[] _shape)
+        public AllowedShape(bool _allowedToClose, Vector3[] _shape)
         {
-            allowed = _allowed;
+            allowedToClose = _allowedToClose;
             shape = _shape;
         }
     }
@@ -514,7 +520,7 @@ public class PathReader1 : MonoBehaviour
         return polygon.ToArray();
     }
 
-    Vector3[] PointsAtUniformDistance(List<Vector3> polygon) // WORKS 100% !! - uses optimalDst
+    Vector3[] PointsAtUniformDistance(List<Vector3> polygon, float optimalPointsDistance) // WORKS 100% !! - uses trajectory points optimal distance
     {
         int idx = 0;
         while (idx < polygon.Count - 1)
@@ -523,13 +529,20 @@ public class PathReader1 : MonoBehaviour
             Vector3 to = polygon[(idx + 1) % polygon.Count];
             float dst = (to - from).magnitude;
 
-            if (dst > optimalDst)
+            if (dst > optimalPointsDistance)
             {
-                for (int i = 1; i < Mathf.Floor(dst / optimalDst); i++)
+                for (int i = 1; i < Mathf.Floor(dst / optimalPointsDistance); i++)
                 {
-                    polygon.Insert(idx + i, new Vector3(from.x + (to.x - from.x) * i * optimalDst / dst, /*polygon[idx + i - 1].y*/from.y + (to.y - from.y) * i * optimalDst / dst, from.z + (to.z - from.z) * i * optimalDst / dst));
+                    polygon.Insert(
+                        idx + i, 
+                        new Vector3(
+                            from.x + (to.x - from.x) * i * optimalPointsDistance / dst, 
+                            /*polygon[idx + i - 1].y*/
+                            from.y + (to.y - from.y) * i * optimalPointsDistance / dst, 
+                            from.z + (to.z - from.z) * i * optimalPointsDistance / dst)
+                        );
                 }
-                idx += (int)Mathf.Floor(dst / optimalDst);
+                idx += (int)Mathf.Floor(dst / optimalPointsDistance);
             }
             else idx++;
         }
@@ -580,13 +593,13 @@ public class PathReader1 : MonoBehaviour
         return new Vector3((segment.p1.x + segment.p2.x) / 2, (segment.p1.y + segment.p2.y) / 2, (segment.p1.z + segment.p2.z) / 2);
     }
 
-    void SmoothenAtPoint(Vector3[] polygon, float optimal, int index, int dpt, int maxdpt)
+    void SmoothenAtPoint(Vector3[] polygon, float optimal, int index, int dpt, int maxdpt, float optimalPointsDistance)
     {
         if (dpt == maxdpt)
         {
             return;
         }
-        float optimalDistance = optimal * optimalDst;
+        float optimalDistance = optimal * optimalPointsDistance;
         int previousIndex = (index - 1 + polygon.Length) % polygon.Length;
         int nextIndex = (index + 1) % polygon.Length;
 
@@ -594,24 +607,24 @@ public class PathReader1 : MonoBehaviour
         {
             polygon[index] = MiddleOfSegment(new Segment(polygon[previousIndex], polygon[nextIndex]));
             if (index > 0)
-                SmoothenAtPoint(polygon, optimal, previousIndex, dpt + 1, maxdpt);
+                SmoothenAtPoint(polygon, optimal, previousIndex, dpt + 1, maxdpt, optimalPointsDistance);
             if (index < polygon.Length - 1)
-                SmoothenAtPoint(polygon, optimal, nextIndex, dpt + 1, maxdpt);
+                SmoothenAtPoint(polygon, optimal, nextIndex, dpt + 1, maxdpt, optimalPointsDistance);
         }
     }
 
-    Vector3[] SmoothenBounds(Vector3[] polygon, float optimal)
+    Vector3[] SmoothenBounds(Vector3[] polygon, float optimal, float optimalPointsDistance)
     {
         for (int idx = 1; idx < polygon.Length; idx++)
         {
-            SmoothenAtPoint(polygon, optimal, idx, 0, 20);
+            SmoothenAtPoint(polygon, optimal, idx, 0, 20, optimalPointsDistance);
         }
         polygon = polygon.Take(polygon.Length - 1).ToArray();
         polygon = RotateArray(polygon, polygon.Length / 2);
         polygon[polygon.Length - 1] = polygon[0];
         for (int idx = 1; idx < polygon.Length; idx++)
         {
-            SmoothenAtPoint(polygon, optimal, idx, 0, 20);
+            SmoothenAtPoint(polygon, optimal, idx, 0, 20, optimalPointsDistance);
         }
         polygon = polygon.Take(polygon.Length - 1).ToArray();
         polygon = RotateArray(polygon, polygon.Length - polygon.Length / 2);
@@ -621,6 +634,8 @@ public class PathReader1 : MonoBehaviour
 
     AllowedShape AllowToCloseShape(Vector3[] polygon)
     {
+        if (polygon == null) return new AllowedShape(false, null);
+
         float deviationsSum = 0;
         int idx;
         if (polygon[polygon.Length - 1] == polygon[0])
@@ -1017,8 +1032,6 @@ public class PathReader1 : MonoBehaviour
     public bool deleteOrbiting, deleteFreeMotion, deleteTrajs;
 
     int interp; // interpolation
-    float optimalDst; // optimal distance between each consecutive 2 points on lines drawing
-
     private void Awake()
     {
         realFrameCount = 0;
@@ -1035,7 +1048,6 @@ public class PathReader1 : MonoBehaviour
         wrongTrajsLst = new List<FlickeringLine>();
         minimumCompletionAngle = 250; // toleranta pentru greseli la desen !
         interp = 2;
-        optimalDst = 0.1f;
         smootheningFactor = 0.02f;
         hsInBetweenDistance = 0f;
         numberOfSwitches = 6;
@@ -1055,7 +1067,6 @@ public class PathReader1 : MonoBehaviour
         planetObject.GetComponent<Rigidbody>().useGravity = false;
 
         //setBaseOpacity(-0.2f);
-        gameObject.AddComponent<EventSystem>();
 
         // configuring planet which stays with the cursor:
         cursorPlanet = GameObject.Find("CursorPlanet");
@@ -1069,7 +1080,7 @@ public class PathReader1 : MonoBehaviour
 
     void Update()
     {
-        if (MainSceneUI.gameIsPaused())
+        if (MainSceneUI.GameIsPaused())
         {
             foreach (var hs in motionFreePlanets)
             {
@@ -1154,11 +1165,13 @@ public class PathReader1 : MonoBehaviour
                 Vector3[] intermediate = markers.ToArray();
                 List<Vector3> markersList = new List<Vector3>();
 
+                float optimalPointsDistance = ValueSheet.trajectoryOptimalDispersion * ValueSheet.averagePlanetSize / LevelParameters.currentPlanet.size;
+
                 int point = 0, index = 0;
                 while (index < intermediate.Length)                     // ..................point.................index....................
                     // acest while face dispersia si deci markersList e lista de puncte dispersate
                 {
-                    if ((intermediate[index] - intermediate[point]).magnitude < optimalDst)
+                    if ((intermediate[index] - intermediate[point]).magnitude < optimalPointsDistance)
                     {
                         index++;
                     }
@@ -1189,54 +1202,73 @@ public class PathReader1 : MonoBehaviour
                     }
                 }
 
-                //Debug.Log("markersPV[0] = " + markersPV[0].ToString() + " and markersPV[last] = " + markersPV[markersPV.Length - 1].ToString());
 
-                // in urmatoarele 10 linii se va calcula realLength, adica cea pornind din poz initiala, mergand pana la punctul oposed.to, apoi continuand pana cand pozitia x devine mai mare ca pozitia x a poz initiale
-                int realLength = oposed.to;
-                while (realLength < markersPV.Length)
+                TrajectorySize trajectoryDimension;
+                if (markersPV.Length == 0)
+                    trajectoryDimension = TrajectorySize.TOO_SMALL;
+                else
                 {
-                    if (markersPV[realLength].x > markersPV[0].x)
+                    float trajectoryRadius = (markersPV[oposed.to] - markersPV[oposed.from]).magnitude / 2.0f;
+                    trajectoryDimension =
+                        trajectoryRadius > ValueSheet.maxAllowedTrajectoryRadius
+                            ? TrajectorySize.TOO_LARGE
+                            : trajectoryRadius < ValueSheet.minAllowedTrajectoryRadius
+                                ? TrajectorySize.TOO_SMALL
+                                : TrajectorySize.OK;
+                }
+
+                if (trajectoryDimension == TrajectorySize.OK)
+                {
+
+                    //Debug.Log("markersPV[0] = " + markersPV[0].ToString() + " and markersPV[last] = " + markersPV[markersPV.Length - 1].ToString());
+
+                    // in urmatoarele 10 linii se va calcula realLength, adica cea pornind din poz initiala, mergand pana la punctul oposed.to, apoi continuand pana cand pozitia x devine mai mare ca pozitia x a poz initiale
+                    int realLength = oposed.to;
+                    while (realLength < markersPV.Length)
                     {
-                        realLength++;
+                        if (markersPV[realLength].x > markersPV[0].x)
+                        {
+                            realLength++;
+                        }
+                        else break;
                     }
-                    else break;
-                }
 
-                //Debug.Log("realLength = " + realLength.ToString() + " but original elngth was " + markersPV.Length.ToString());
+                    //Debug.Log("realLength = " + realLength.ToString() + " but original elngth was " + markersPV.Length.ToString());
 
-                markersV = new Vector3[realLength + 1]; // markersV e traiectoria scurtata depinzand de pozitia x (pentru a nu evita traiectoriile esuate pe arc > 360gr)
-                for (int idx = 0; idx < realLength; idx++)
-                {
-                    markersV[idx] = markersPV[idx];
-                }
-                markersV[realLength] = markersV[0];
-
-                int firstLeftSide = oposed.to;
-                while (firstLeftSide < realLength)
-                {
-                    if (markersV[firstLeftSide] == LineApproximation(markersV[firstLeftSide - 1], markersV[0], markersV[firstLeftSide], leftSide))
+                    markersV = new Vector3[realLength + 1]; // markersV e traiectoria scurtata depinzand de pozitia x (pentru a nu evita traiectoriile esuate pe arc > 360gr)
+                    for (int idx = 0; idx < realLength; idx++)
                     {
-                        firstLeftSide++;
+                        markersV[idx] = markersPV[idx];
                     }
-                    else break;
-                }
+                    markersV[realLength] = markersV[0];
 
-                for (int idx = firstLeftSide; idx < markersV.Length; idx++)
-                {
-                    markersV[idx] = LineApproximation(markersV[firstLeftSide], markersV[0], markersV[idx], leftSide);
-                }
+                    int firstLeftSide = oposed.to;
+                    while (firstLeftSide < realLength)
+                    {
+                        if (markersV[firstLeftSide] == LineApproximation(markersV[firstLeftSide - 1], markersV[0], markersV[firstLeftSide], leftSide))
+                        {
+                            firstLeftSide++;
+                        }
+                        else break;
+                    }
 
-                markersV = FlattenInnerCurves(VectorToList(markersV));
+                    for (int idx = firstLeftSide; idx < markersV.Length; idx++)
+                    {
+                        markersV[idx] = LineApproximation(markersV[firstLeftSide], markersV[0], markersV[idx], leftSide);
+                    }
+
+                    markersV = FlattenInnerCurves(VectorToList(markersV));
+                }
 
                 AllowedShape shape = AllowToCloseShape(markersV);
-                if (shape.allowed)
+                if (trajectoryDimension == TrajectorySize.OK && shape.allowedToClose)
                 {
                     markersV = shape.shape;
 
                     markersXV = CloseShape(markersV);
-                    markersXV = PointsAtUniformDistance(VectorToList(markersXV)); // CU dispersie SI interp liniara
+                    markersXV = PointsAtUniformDistance(VectorToList(markersXV), optimalPointsDistance); // CU dispersie SI interp liniara
 
-                    markersXV = SmoothenBounds(markersXV, smootheningFactor);
+                    markersXV = SmoothenBounds(markersXV, smootheningFactor, optimalPointsDistance);
                     GameObject trajRendererObject = ShowTrajectory(markersXV, Color.green);
                     trajsLst.Add(trajRendererObject);
 
@@ -1267,6 +1299,18 @@ public class PathReader1 : MonoBehaviour
                 else
                 {
                     wrongTrajsLst.Add(new FlickeringLine(numberOfLineSwitches, framesBetweenSwitching, ShowTrajectory(markers.ToArray(), Color.red)));
+                    if (trajectoryDimension == TrajectorySize.OK && !shape.allowedToClose)
+                    {
+                        Notifications.AddNotification(Notifications.NotificationType.TRAJECTORY_NOT_ABLE_TO_CLOSE);
+                    }
+                    if (trajectoryDimension == TrajectorySize.TOO_SMALL)
+                    {
+                        Notifications.AddNotification(Notifications.NotificationType.TRAJECTORY_TOO_SMALL);
+                    }
+                    if (trajectoryDimension == TrajectorySize.TOO_LARGE)
+                    {
+                        Notifications.AddNotification(Notifications.NotificationType.TRAJECTORY_TOO_LARGE);
+                    }
                 }
             }
         }

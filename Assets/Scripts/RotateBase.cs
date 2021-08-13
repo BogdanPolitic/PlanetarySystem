@@ -65,14 +65,9 @@ public class RotateBase : MonoBehaviour
         GUIwasSetup = false;
     }
 
-    void Update()
-    {
-        
-    }
-
     private void OnGUI()
     {
-        if (MainSceneUI.isIntoInventory() || hiddenUI)
+        if (MainSceneUI.IsIntoInventory() || hiddenUI)
             return;
 
         if (!GUIwasSetup)

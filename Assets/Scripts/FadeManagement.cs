@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 // WARNING! This is a prefab object that is instantiated for both PLAY and MENU scenes. You may use gameEndStatus and gameEndStatusText for ONLY the PLAY scene. They're null (unassigned) in the MENU scene.
@@ -20,6 +21,19 @@ public class FadeManagement : MonoBehaviour
         {
             gameEndStatusText = gameEndStatus.GetComponent<Text>();
         }
+
+        /*GameObject[] allObjects = UnityEngine.Object.FindObjectsOfType<GameObject>();
+        int u = 0;
+        foreach (GameObject go in allObjects)
+        {
+            if (go.GetComponent<EventSystem>() != null)
+            {
+                Debug.Log("go name = " + go.transform.name);
+                u++;
+            }
+        }
+
+        if (u == 0) Debug.Log("nu am gasit event system pa");*/
     }
 
     public static FadeManagement GetInstance()

@@ -7,60 +7,130 @@ public class MainSceneUI : MonoBehaviour
 {
     public static MainSceneUI instance;
 
-    float screenWidth;
-    float screenHeight;
+    public class NotificationObject
+    {
+        public GameObject containerObject;
+        public GameObject backgroundObject;
+        public GameObject textObject;
+
+        public void SetActive(bool active)
+        {
+            containerObject.SetActive(active);
+        }
+
+        public void CopyTransformRect(GameObject original, GameObject destination)
+        {
+            RectTransform originalC = original.GetComponent<RectTransform>();
+            RectTransform destinationC = destination.GetComponent<RectTransform>();
+
+            destinationC.anchorMin = originalC.anchorMin;
+            destinationC.anchorMax = originalC.anchorMax;
+            destinationC.offsetMin = originalC.offsetMin;
+            destinationC.offsetMax = originalC.offsetMax;
+            destinationC.anchoredPosition = originalC.anchoredPosition;
+            destinationC.sizeDelta = originalC.sizeDelta;
+            destinationC.localScale = new Vector3(1, 1, 1);
+        }
+
+        public NotificationObject(GameObject containerObject, bool isTemplate)
+        {
+            this.containerObject = containerObject;
+
+            foreach (Transform child in containerObject.transform)
+            {
+                if (child.gameObject.GetComponent<Text>() != null)
+                    textObject = child.gameObject;
+                if (child.gameObject.GetComponent<Image>() != null)
+                    backgroundObject = child.gameObject;
+            }
+
+            if (!isTemplate)
+            {
+                CopyTransformRect(
+                    instance.notificationTemplateObject.containerObject,
+                    containerObject
+                );
+
+                CopyTransformRect(
+                    instance.notificationTemplateObject.backgroundObject,
+                    backgroundObject
+                );
+
+                CopyTransformRect(
+                    instance.notificationTemplateObject.textObject,
+                    textObject
+                );
+            }
+
+            SetActive(false);   // At the start, notification objects will be there, but none will be active yet, because, obviously, no notification was issued yet.
+        }
+    }
+
+    [SerializeField] Canvas canvas;
+    [SerializeField] Button pauseButton;
+    [SerializeField] Button retireLevelButton;
+
+    float screenWidth = 0;
+    float screenHeight = 0;
 
     private bool showingUI;
     static bool paused;
     static bool intoInventory;
     float secondsLeft;
 
-    string[] lastNotifications;
-    int MAX_NOTIFICATIONS;
+    [SerializeField] GameObject notificationTemplate;
+    [SerializeField] GameObject notificationsPanel;
+    public NotificationObject notificationTemplateObject;
+    List<NotificationObject> notificationObjects;
 
     public Texture inventoryChestTexture;
     public Texture currentPlanetTexture;
+    [SerializeField] Text secondsLeftText;
     [SerializeField] Text totalPointsText;
     [SerializeField] Text giveOrTakePointsText;
     public bool detectedTotalPointsChange;
 
     public Animator fadeAnimator;
+    [SerializeField] Animator secondsLeftAnimator;
     [SerializeField] Animator changeScoreTextAnimator;
     public bool playerIsRetiringLevel;
 
-    public void ShowUI()
-    {
-        showingUI = true;
-        RotateBase.GetInstance().ShowUI();
-    }
-
-    public void HideUI()
-    {
-        showingUI = false;
-        RotateBase.GetInstance().HideUI();
-    }
-
-    public static bool isIntoInventory()
+    public static bool IsIntoInventory()
     {
         return intoInventory;
     }
 
-    public static void exitInventory()
+    public static void ExitInventory()
     {
         intoInventory = false;
     }
 
-    public static bool gameIsPaused()
+    public static bool GameIsPaused()
     {
         return paused;
     }
 
-    public static void setPauseMode(bool mode)
+    public static void SetPauseMode(bool mode)
     {
         paused = mode;
     }
 
-    private string pauseButtonState()
+    // EVENT: After pressing the "Pause" button.
+    public static void SwitchPauseState()
+    {
+        paused = !paused;
+        Time.timeScale = paused ? 0 : 1;
+    }
+
+    // EVENT: After pressing the "Retire level" button.
+    public void RetireLevel()
+    {
+        playerIsRetiringLevel = true;
+        HideUI();
+        fadeAnimator.SetTrigger("ProceedToFadeOutAfterRetire");
+    }
+
+    private string PauseButtonState()
     {
         if (paused) return "RESUME"; 
         return "PAUSE";
@@ -71,6 +141,11 @@ public class MainSceneUI : MonoBehaviour
         detectedTotalPointsChange = true;
     }
 
+    public void AddNotificationObject()
+    {
+
+    }
+
     private void Awake()
     {
         instance = this;
@@ -78,6 +153,8 @@ public class MainSceneUI : MonoBehaviour
         showingUI = false;
         playerIsRetiringLevel = false;
         detectedTotalPointsChange = false;
+
+        notificationObjects = new List<NotificationObject>();
 
         Notifications.Initialize();
     }
@@ -91,19 +168,89 @@ public class MainSceneUI : MonoBehaviour
     {
         paused = false;
         intoInventory = false;
-        secondsLeft = 60.0f;
 
-        MAX_NOTIFICATIONS = Screen.height / 150;
-        lastNotifications = new string[MAX_NOTIFICATIONS];
+        canvas.gameObject.SetActive(false);
+
+        notificationTemplateObject = new NotificationObject(notificationTemplate, true);
+        InitializeNotificationsList();
     }
 
     private void Update()
     {
-        secondsLeft -= Time.deltaTime;
         currentPlanetTexture = (Texture)Resources.Load(LevelParameters.currentPlanet.pathToImage);
 
         if (LevelParameters.planetPlacedThisFrame || LevelParameters.planetsDestroyedThisFrame > 0)
             changeScoreTextAnimator.SetTrigger("changeText");
+    }
+
+    public void HideUI()
+    {
+        showingUI = false;
+        RotateBase.GetInstance().HideUI();  // If we would've had all the UI in the same script, this call would not have been necesarry.
+
+        canvas.gameObject.SetActive(false);
+    }
+
+    public void ShowUI()
+    {
+        showingUI = true;
+        RotateBase.GetInstance().ShowUI();
+
+        canvas.gameObject.SetActive(true);
+        secondsLeftAnimator.SetTrigger("StartLevelMainCountdown");
+    }
+
+    private void InitializeNotificationsList()
+    {
+        for (int notifIndex = 0; notifIndex < ValueSheet.maxNumberOfFittingNotifications; notifIndex++)
+        {
+            GameObject notificationGameObject = Instantiate(notificationTemplate, notificationsPanel.transform);
+            notificationObjects.Add(new NotificationObject(notificationGameObject, false));
+        }
+
+        ResizeUIElements.InitializeNotificationsList(notificationObjects);
+    }
+
+    public void UpdateNotificationObjects(int currentNumberOfFittingNotifications)
+    {
+        if (notificationObjects == null || notificationObjects.Count == 0) return;
+
+        RectTransform templateBackgroundRect = notificationTemplateObject.backgroundObject.GetComponent<RectTransform>();
+        RectTransform templateTextRect = notificationTemplateObject.textObject.GetComponent<RectTransform>();
+
+        int notifIndex = 0;
+        foreach (NotificationObject notifObj in notificationObjects)
+        {
+            if (notifIndex >= currentNumberOfFittingNotifications)
+                continue;
+
+            notifObj.SetActive(true);
+
+            RectTransform notifObjBackgroundRect = notifObj.backgroundObject.GetComponent<RectTransform>();
+            notifObjBackgroundRect.anchorMin = new Vector2(
+                templateBackgroundRect.anchorMin.x,
+                templateBackgroundRect.anchorMin.y - notifIndex * 0.05f
+            );
+            notifObjBackgroundRect.anchorMax = new Vector2(
+                templateBackgroundRect.anchorMax.x,
+                templateBackgroundRect.anchorMax.y - notifIndex * 0.05f
+            );
+
+            RectTransform notifObjTextRect = notifObj.textObject.GetComponent<RectTransform>();
+            notifObjTextRect.anchorMin = new Vector2(
+                templateTextRect.anchorMin.x,
+                templateTextRect.anchorMin.y - notifIndex * 0.05f
+            );
+            notifObjTextRect.anchorMax = new Vector2(
+                templateTextRect.anchorMax.x,
+                templateTextRect.anchorMax.y - notifIndex * 0.05f
+            );
+
+            notifObj.textObject.GetComponent<Text>().text = Notifications.GetLatestNotificationAt(notifIndex);
+            notifIndex++;
+        }
+
+        notificationObjects[0].textObject.GetComponent<Animator>().SetTrigger("StretchText");
     }
 
     private void OnGUI()
@@ -116,7 +263,19 @@ public class MainSceneUI : MonoBehaviour
         if (intoInventory)
             return;
 
-        MAX_NOTIFICATIONS = Screen.height / 150;
+        secondsLeftText.text = LevelParameters.secondsLeft.ToString();
+        LevelSpecification.Initialize();
+        float levelDurationLeftPercentage = 1.0f - (float)LevelParameters.secondsLeft / LevelSpecification.levelSpecs[LevelParameters.currentLevel].totalTime;
+        secondsLeftText.color = MyMath.InterpolateBetweenVector4s(
+            ValueSheet.levelSecondsLeftColorStart, 
+            ValueSheet.levelSecondsLeftColorEnd, 
+            levelDurationLeftPercentage
+        );
+        secondsLeftText.GetComponent<Shadow>().effectColor = MyMath.InterpolateBetweenVector4s(
+            ValueSheet.levelSecondsLeftColorEnd, 
+            ValueSheet.levelSecondsLeftColorStart, 
+            levelDurationLeftPercentage
+        );
 
         if (detectedTotalPointsChange)
         {
@@ -142,54 +301,8 @@ public class MainSceneUI : MonoBehaviour
             ))
             {
                 intoInventory = true;
-                setPauseMode(true);
+                SetPauseMode(true);
             }
-
-            GUI.Button(
-                new Rect(
-                    screenWidth * (ValueSheet.gameplayButtonsPositionX - ValueSheet.gameplayButtonsDimensionX / 2.0f),
-                    screenHeight * (ValueSheet.gameplayTimeLeftButtonPositionY - ValueSheet.gameplayButtonsDimensionY / 2.0f),
-                    screenWidth * ValueSheet.gameplayButtonsDimensionX,
-                    screenHeight * ValueSheet.gameplayButtonsDimensionY
-                ),
-                "TIME LEFT: " + LevelParameters.secondsLeft
-            );
-
-            if (GUI.Button(
-                new Rect(
-                    screenWidth * (ValueSheet.gameplayButtonsPositionX - ValueSheet.gameplayButtonsDimensionX / 2.0f),
-                    screenHeight * (ValueSheet.gameplayPauseButtonPositionY - ValueSheet.gameplayButtonsDimensionY / 2.0f),
-                    screenWidth * ValueSheet.gameplayButtonsDimensionX,
-                    screenHeight * ValueSheet.gameplayButtonsDimensionY
-                ),
-                pauseButtonState()
-            ))
-            {
-                paused = !paused;
-            }
-
-            if (GUI.Button(
-                new Rect(
-                    screenWidth * (ValueSheet.gameplayButtonsPositionX - ValueSheet.gameplayButtonsDimensionX / 2.0f),
-                    screenHeight * (ValueSheet.gameplayRetireLevelButtonPositonY - ValueSheet.gameplayButtonsDimensionY / 2.0f),
-                    screenWidth * ValueSheet.gameplayButtonsDimensionX,
-                    screenHeight * ValueSheet.gameplayButtonsDimensionY
-                ),
-                "RETIRE LEVEL"
-            ))
-            {
-                playerIsRetiringLevel = true;
-                HideUI();
-                fadeAnimator.SetTrigger("ProceedToFadeOutAfterRetire");
-            }
-
-            Rect notificationWindowRect = new Rect(
-                screenWidth * (ValueSheet.gameplayNotificationsWindowPositionX - ValueSheet.gameplayNotificationsWindowDimensionX / 2.0f),
-                screenHeight * (ValueSheet.gameplayNotificationsWindowPositionY - ValueSheet.gameplayNotificationsWindowDimensionY / 2.0f),
-                screenWidth * ValueSheet.gameplayNotificationsWindowDimensionX,
-                screenHeight * ValueSheet.gameplayNotificationsWindowDimensionY
-            );
-            GUI.Window(1, notificationWindowRect, windowTextForm, "Notifications");
 
             Rect planetInfoAndPlanetsLeftRect = new Rect(
                 screenWidth * (ValueSheet.nextPlanetInfoWindowPositionX - ValueSheet.nextPlanetInfoWindowDimensionX / 2.0f),
@@ -199,20 +312,6 @@ public class MainSceneUI : MonoBehaviour
             );
             GUI.Window(2, planetInfoAndPlanetsLeftRect, windowPlanetInfoAndPlanetsLeft, "Next planet");
         }
-    }
-
-    void windowTextForm(int formId)
-    {
-        GUILayout.BeginVertical();
-
-        for (int i = 0; i < Mathf.Min(Notifications.GetCount(), MAX_NOTIFICATIONS); i++)
-        {
-            GUILayout.Label(Notifications.GetLatestNotificationAt(i));
-        }
-
-        //GUILayout.Box(aTexture);
-
-        GUILayout.EndVertical();
     }
 
     void windowPlanetInfoAndPlanetsLeft(int formId)

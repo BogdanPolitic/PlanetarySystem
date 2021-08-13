@@ -3,9 +3,25 @@ using UnityEngine;
 
 public class ValueSheet
 {
+    public static int defaultScreenWidth = 1000;
+    public static int defaultScreenHeight = 650;
+
+
+
+    public static float minAllowedTrajectoryRadius = 0.9f;
+    public static float maxAllowedTrajectoryRadius = 5.5f;
+
+    public static float averagePlanetSize = 10.0f;
+    public static float trajectoryOptimalDispersion = 0.05f; // Optimal distance between each consecutive 2 points on lines drawing, considering an average planet.
+
+
+
     public static float equilibriumDurationRequirementSeconds = 10.0f;
 
 
+
+    public static Vector4 levelSecondsLeftColorStart = new Vector4(0, 1, 0, 1);
+    public static Vector4 levelSecondsLeftColorEnd = new Vector4(1, 0, 0, 1);
 
     public static Vector4 countdownColorStart = new Vector4(0, 1, 0, 1);    // Starts green
     public static Vector4 countdownColorEnd = new Vector4(1, 0, 0, 1);      // Ends red
@@ -33,13 +49,13 @@ public class ValueSheet
     public static float rotateBaseWindowPositionX = 0.83f;
     public static float rotateBaseWindowPositionY = 0.18f;
 
-    // There are 3 buttons in the gameplay view. All of them have the same X position as the rotateBase window. But the Y position is individual (thus, they are positioned vertically).
+    // There are 2 buttons in the gameplay view. All of them (there're only 2) have the same X position as the rotateBase window. But the Y position is individual (thus, they are positioned vertically).
     public static float gameplayButtonsDimensionX = 0.15f;
     public static float gameplayButtonsDimensionY = 0.05f;
     public static float gameplayButtonsPositionX = rotateBaseWindowPositionX;
-    public static float gameplayTimeLeftButtonPositionY = 0.7f;
-    public static float gameplayRetireLevelButtonPositonY = 0.55f;
-    public static float gameplayPauseButtonPositionY = 0.4f;
+    //public static float gameplayTimeLeftButtonPositionY = 0.7f;
+    public static float gameplayRetireLevelButtonPositonY = 0.58f;
+    public static float gameplayPauseButtonPositionY = 0.45f;
 
     // The notifications window has the same X position and X dimension as the rotateBase window.
     public static float gameplayNotificationsWindowDimensionX = rotateBaseWindowDimensionX;
@@ -63,16 +79,34 @@ public class ValueSheet
 
     // Notifications:
     public static int maxNumberOfRecentNotifications = 20;
+    public static int maxNumberOfFittingNotifications = 4;
     public static Dictionary<Notifications.NotificationType, string> notificationTypes = new Dictionary<Notifications.NotificationType, string>()
     {
-        // Rewards:
+        /*// Rewards:
         { Notifications.NotificationType.PLANET_PLACED, "Planet successfully placed. You won " + pointsPerPlanetPlaced + " points!" },
 
         // Penalties:
         { Notifications.NotificationType.PLANET_DESTROYED, "A collision occured and some planets were destroyed! You lost " + pointsPenaltyPerPlanetDestroyed + " points per destruction!" },
 
         // Warnings:
+        { Notifications.NotificationType.TRAJECTORY_NOT_ABLE_TO_CLOSE, "Your draw is incomplete. Trajectory not closing." },
+        { Notifications.NotificationType.TRAJECTORY_TOO_SMALL, "Trajectory you've drawn is too small." },
+        { Notifications.NotificationType.TRAJECTORY_TOO_LARGE, "Trajectory you've drawn is too large." },
         { Notifications.NotificationType.MAX_AMOUNT_PLANETS, "The required amount of planets has been reached. You cannot place more."},
-        { Notifications.NotificationType.EMPTY_INVENTORY, "You cannot place any more planets because your inventory is empty." }
+        { Notifications.NotificationType.EMPTY_INVENTORY, "You cannot place any more planets because your inventory is empty." }*/
+
+
+        // Rewards:
+        { Notifications.NotificationType.PLANET_PLACED, "Planet successfully placed!" },
+
+        // Penalties:
+        { Notifications.NotificationType.PLANET_DESTROYED, "A collision occured!" },
+
+        // Warnings:
+        { Notifications.NotificationType.TRAJECTORY_NOT_ABLE_TO_CLOSE, "Your draw is incomplete." },
+        { Notifications.NotificationType.TRAJECTORY_TOO_SMALL, "Trajectory is too small." },
+        { Notifications.NotificationType.TRAJECTORY_TOO_LARGE, "Trajectory is too large." },
+        { Notifications.NotificationType.MAX_AMOUNT_PLANETS, "No more planets required."},
+        { Notifications.NotificationType.EMPTY_INVENTORY, "Empty inventory!" }
     };
 }

@@ -146,7 +146,7 @@ public class LoadMeteors : MonoBehaviour
 
     void Update()
     {
-        if (MainSceneUI.gameIsPaused())
+        if (MainSceneUI.GameIsPaused())
             return;
 
         foreach (var currentLevel in meteors)

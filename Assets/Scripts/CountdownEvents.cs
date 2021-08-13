@@ -34,12 +34,13 @@ public class CountdownEvents : MonoBehaviour
 
         // Color interpolation:
         float durationPercentage = secondsSinceEquilibrium / (float)ValueSheet.equilibriumDurationRequirementSeconds;
-        Vector4 newColor = new Vector4(
+        /*Vector4 newColor = new Vector4(
             ValueSheet.countdownColorStart.x + (ValueSheet.countdownColorEnd.x - ValueSheet.countdownColorStart.x) * durationPercentage,
             ValueSheet.countdownColorStart.y + (ValueSheet.countdownColorEnd.y - ValueSheet.countdownColorStart.y) * durationPercentage,
             ValueSheet.countdownColorStart.z + (ValueSheet.countdownColorEnd.z - ValueSheet.countdownColorStart.z) * durationPercentage,
             ValueSheet.countdownColorStart.w + (ValueSheet.countdownColorEnd.w - ValueSheet.countdownColorStart.w) * durationPercentage
-        );
+        );*/
+        Vector4 newColor = MyMath.InterpolateBetweenVector4s(ValueSheet.countdownColorStart, ValueSheet.countdownColorEnd, durationPercentage);
         countdownSecondsText.color = new Color(newColor.x, newColor.y, newColor.z, newColor.w);
     }
 

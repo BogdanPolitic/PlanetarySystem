@@ -77,7 +77,7 @@ public class Inventory : MonoBehaviour
                                             "PlanetSurfaces/3D_Projections/jupiter_spheric",
                                             "",
                                             5,
-                                            40.0f,
+                                            25.0f,
                                             0.0f,
                                             0,
                                             1.5f);
@@ -117,7 +117,7 @@ public class Inventory : MonoBehaviour
                                             "PlanetSurfaces/3D_Projections/pluto_spheric",
                                             "",
                                             5,
-                                            4.0f,
+                                            6.0f,
                                             0.0f,
                                             0,
                                             1.5f);
@@ -127,7 +127,7 @@ public class Inventory : MonoBehaviour
                                             "PlanetSurfaces/3D_Projections/saturn_spheric",
                                             "",
                                             5,
-                                            35.0f,
+                                            22.0f,
                                             0.0f,
                                             0,
                                             1.5f);

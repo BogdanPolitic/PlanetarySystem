@@ -60,7 +60,7 @@ public class LevelParameters : MonoBehaviour
 
     public void Update()
     {
-        if (MainSceneUI.gameIsPaused())
+        if (MainSceneUI.GameIsPaused())
             return;
 
         internalTime += Time.deltaTime;

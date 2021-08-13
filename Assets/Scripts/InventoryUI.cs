@@ -50,7 +50,7 @@ public class InventoryUI : MonoBehaviour
 
     private void Update()
     {
-        if (MainSceneUI.isIntoInventory())
+        if (MainSceneUI.IsIntoInventory())
         {
             if (routeState == ENTERING_INVETORY)
                 routeState = INSIDE_INVENTORY;
@@ -76,8 +76,8 @@ public class InventoryUI : MonoBehaviour
 
         if (routeState == EXITING_INVENTORY)
         {
-            MainSceneUI.exitInventory();
-            MainSceneUI.setPauseMode(false);
+            MainSceneUI.ExitInventory();
+            MainSceneUI.SetPauseMode(false);
             FindObjectOfType<Camera>().gameObject.transform.position = lastPositionOutsideInventory;
             FindObjectOfType<Camera>().gameObject.transform.rotation = lastRotationOutsideInventory;
         }
@@ -90,7 +90,7 @@ public class InventoryUI : MonoBehaviour
     
     private void OnGUI()
     {
-        if (!MainSceneUI.isIntoInventory())
+        if (!MainSceneUI.IsIntoInventory())
             return;
 
         currentPlanetTexture = (Texture)Resources.Load(LevelParameters.currentPlanet.pathToImage);

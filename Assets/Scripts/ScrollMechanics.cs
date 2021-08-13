@@ -61,7 +61,7 @@ public class ScrollMechanics : MonoBehaviour
     PBRNoiseOffsetY BOTTOM_CUT_BOX = new PBRNoiseOffsetY(0.0f, 0.5f);
 
     PBRNoiseOffsetY TOP_CUT_TEXT = new PBRNoiseOffsetY(0.5f, 1.0f);
-    PBRNoiseOffsetY BOTTOM_CUT_TEXT = new PBRNoiseOffsetY(0.0f, 0.5f);
+    PBRNoiseOffsetY BOTTOM_CUT_TEXT = new PBRNoiseOffsetY(0.0f, 0.4f);  // Should've been 0.5 logically, but it 0.4f seems a bit better while scrolling.
 
     ButtonObject[] levels;
 

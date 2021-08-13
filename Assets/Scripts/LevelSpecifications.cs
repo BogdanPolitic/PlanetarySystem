@@ -11,9 +11,13 @@ public class LevelSpecification : MonoBehaviour
         public int requiredNumberOfPlanets;
     }
 
+    public static bool initialized = false;
     public static LevelSpec[] levelSpecs;
 
     public static void Initialize() {
+        if (initialized) return;
+        initialized = true;
+
         levelSpecs = new LevelSpec[GenericButtonListener.numberOfLevels];   // 9 la momentul actual
 
         for (int i = 0; i < GenericButtonListener.numberOfLevels; i++)
