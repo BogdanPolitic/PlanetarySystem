@@ -182,13 +182,17 @@ public class PathReader1 : MonoBehaviour
         public float fade;
         public bool deleteMark;
 
-        private const int DESTRUCTION_START = 5;    // seconds
-        private const int DESTRUCTION_END = 10;     // seconds
-        public float fadeUnity = (DESTRUCTION_END - DESTRUCTION_START) * Time.deltaTime;
+        private int destructionStartFrameCount;
+        private int destructionEndFrameCount;
 
-        public Halfsphere(GameObject _hs, Inventory.PlanetStack fromPlanetItem, GameObject _parentTrajRenderer, int _ordIdx)
+        private string hsName;
+        private bool first;
+
+        public Halfsphere(GameObject _hs, Inventory.PlanetStack fromPlanetItem, GameObject _parentTrajRenderer, int _ordIdx, bool first = false)
         {
             hs = _hs;
+            hsName = fromPlanetItem.name;
+            this.first = first;
 
             hs.transform.localScale *= (fromPlanetItem.size / 10.0f);
 
@@ -206,21 +210,45 @@ public class PathReader1 : MonoBehaviour
             lastFrameVelocity = Vector3.zero;
             fade = 1f;
             deleteMark = false;
+
+            destructionStartFrameCount = (int)Mathf.Floor(realFrameCount + ValueSheet.halfsphereDestructionStart / Time.deltaTime);
+            destructionEndFrameCount = (int)Mathf.Floor(realFrameCount + ValueSheet.halfsphereDestructionEnd / Time.deltaTime);
         }
 
-        public float age()
+        /*public int age()
         {
-            return (realFrameCount - createdAtFrame) * Time.deltaTime;
-        }
+            return realFrameCount - createdAtFrame;
+        }*/
 
         public int status()
         {
-            if (age() < DESTRUCTION_START)
+            if (realFrameCount < destructionStartFrameCount)
                 return INTEGRAL;
-            else if (age() < DESTRUCTION_END)
+            else if (realFrameCount < destructionEndFrameCount)
                 return IN_DESTRUCTION;
             else
                 return DESTRUCTED;
+        }
+
+        public void ThinTrajectory()
+        {
+            if (parentTrajRenderer.GetComponent<LineRenderer>() != null)
+                parentTrajRenderer.GetComponent<LineRenderer>().widthMultiplier = 
+                    ValueSheet.defaultTracjectoryLineThickness * (1.0f - (realFrameCount - createdAtFrame) / (float)(destructionStartFrameCount - createdAtFrame));
+        }
+
+        // Erodating by enlarging the "burning" effect gradually along all halfsphere's surface
+        public void Erodate()
+        {
+            //int frameCountSinceDestructionStart = (int)(realFrameCount - DESTRUCTION_START / Time.deltaTime - createdAtFrame);
+            //fade = 1.0f - frameCountSinceDestructionStart / (float)((DESTRUCTION_END - DESTRUCTION_START) / Time.deltaTime);
+            fade = 1.0f - (realFrameCount - destructionStartFrameCount) / (float)(destructionEndFrameCount - destructionStartFrameCount);
+            hs.gameObject.GetComponent<MeshRenderer>().material.SetFloat("_Fade", fade);
+
+            if (hsName == "earth" && first)
+            {
+                Debug.Log("fade = " + fade);
+            }
         }
     }
 
@@ -315,7 +343,7 @@ public class PathReader1 : MonoBehaviour
 
         lineRenderer.material = new Material(Shader.Find("Nature/SpeedTree")); // LINIA ASTA CAUZEAZA PROBLEME PE ANDROID (SHADER-UL) !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         lineRenderer.material.color = color;
-        lineRenderer.widthMultiplier = 0.1f;        // ASTFEL AM DEZACTIVAT LINERENDERER-UL !!! INAINTE ERA VIZIBIL, PENTRU CA AVEA WIDTH MULTIPLIER = 0.2F (ACUM L-AM PUS PE 0.0F CA SA FIE INACTIV)
+        lineRenderer.widthMultiplier = ValueSheet.defaultTracjectoryLineThickness;        // ASTFEL AM DEZACTIVAT LINERENDERER-UL !!! INAINTE ERA VIZIBIL, PENTRU CA AVEA WIDTH MULTIPLIER = 0.2F (ACUM L-AM PUS PE 0.0F CA SA FIE INACTIV)
         lineRenderer.positionCount = 0;
         lineRenderer.positionCount += trajectory.Length;
         for (int idx = 0; idx < trajectory.Length; idx++)
@@ -1022,7 +1050,7 @@ public class PathReader1 : MonoBehaviour
     public int numberOfLineSwitches;
     int indexx, ordIdx;
     public static System.Random randomGen;
-    private bool cursorPlanetTexAssigned;
+    public static bool cursorPlanetTexAssigned;
 
     public static int realFrameCount;
     private const int INTEGRAL = -1;
@@ -1327,16 +1355,25 @@ public class PathReader1 : MonoBehaviour
         ////// emisferele care au atins timeFrame-ul de startDestruction vor incepe sa se dezintegreze si li se va sterge collider-ul //
         foreach (Halfsphere hs in motionFreePlanets)
         {
-            if (hs.status() == IN_DESTRUCTION && hs.fade > 0f)
-                hs.fade -= hs.fadeUnity;
-            else if (hs.status() == DESTRUCTED)
-            {
-                Destroy(hs.hs);
-                Destroy(hs.collisionChecker);
-                Destroy(hs.parentTrajRenderer);
-                hs.deleteMark = true;
+            int hsStatus = hs.status();
+            switch (hsStatus) {
+                case INTEGRAL:
+                    hs.ThinTrajectory();
+                    break;
+                case IN_DESTRUCTION:
+                    if (hs.fade > 0f)
+                        //hs.fade -= hs.fadeUnity;
+                        hs.Erodate();
+                    break;
+                case DESTRUCTED:
+                    Destroy(hs.hs);
+                    Destroy(hs.collisionChecker);
+                    Destroy(hs.parentTrajRenderer);
+                    hs.deleteMark = true;
+                    break;
+                default: break;
             }
-            hs.hs.gameObject.GetComponent<MeshRenderer>().material.SetFloat("_Fade", hs.fade);
+            //hs.Erodate();
         }
 
         motionFreePlanets = DeleteMarked(motionFreePlanets);
@@ -1369,7 +1406,7 @@ public class PathReader1 : MonoBehaviour
             if (planetObj.deleteMark && !planetObj.switchRendering.allowed)
             {
                 planetObj.planet.GetComponent<Rigidbody>().velocity = MotionToVelocity(planetObj.trajectory, planetObj.rotationIndex); // aceeasi viteza ca mai inainte, dar de data asta dreapta si continua, nu discreta, generata de inertie, atunci cand planeta paraseste orbita
-                Halfsphere hs1 = new Halfsphere(planetObj.collisionParticles.hs1, planetObj.item, planetObj.collisionParticles.parentTrajRenderer, ordIdx++);
+                Halfsphere hs1 = new Halfsphere(planetObj.collisionParticles.hs1, planetObj.item, planetObj.collisionParticles.parentTrajRenderer, ordIdx++, true);
                 Halfsphere hs2 = new Halfsphere(planetObj.collisionParticles.hs2, planetObj.item, planetObj.collisionParticles.parentTrajRenderer, ordIdx++);
                 // vom seta pozitia initiala a planetelor fantoma. NU setez velocity, deoarece e bine ca ele sa se deplaseze discret, updatandu-si pozitia in functie de pozitia planetelor nefantoma de care apartin.
                 hs1.collisionChecker.transform.position = hs1.hs.transform.position + hs1.hs.GetComponent<Rigidbody>().velocity * Time.deltaTime;
@@ -1411,7 +1448,7 @@ public class PathReader1 : MonoBehaviour
                 //if (freeMotionPlanet.collisionChecker.GetComponent<Checker>().collidedWithPlanet) // (14.03.2020)
                 {
                     HalfspherePair pair = Disintegrate(orbitingPlanet, MotionToVelocity(orbitingPlanet.trajectory, orbitingPlanet.rotationIndex));
-                    Halfsphere hs1 = new Halfsphere(pair.hs1, orbitingPlanet.item, pair.parentTrajRenderer, ordIdx++);
+                    Halfsphere hs1 = new Halfsphere(pair.hs1, orbitingPlanet.item, pair.parentTrajRenderer, ordIdx++, true);
                     Halfsphere hs2 = new Halfsphere(pair.hs2, orbitingPlanet.item, pair.parentTrajRenderer, ordIdx++);
                     // ne trebuie pozitia, pentru a verifica in bucla urmatoare, in if, variabila collided (in scriptul celalalt se va detecta sau nu ciocnirea, deci trebuie neaparat pozitia curenta a fantomei inca de acum).
                     hs1.collisionChecker.transform.position = hs1.hs.transform.position + hs1.hs.GetComponent<Rigidbody>().velocity * Time.deltaTime;

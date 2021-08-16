@@ -7,6 +7,12 @@ public class MainSceneUI : MonoBehaviour
 {
     public static MainSceneUI instance;
 
+    public enum SceneMode
+    {
+        GAMEPLAY,
+        INVENTORY
+    }
+
     public class NotificationObject
     {
         public GameObject containerObject;
@@ -110,9 +116,12 @@ public class MainSceneUI : MonoBehaviour
         return paused;
     }
 
-    public static void SetPauseMode(bool mode)
+    public static void SetSceneMode(SceneMode mode)
     {
-        paused = mode;
+        paused = (mode == SceneMode.INVENTORY);
+        Time.timeScale = paused ? 0 : 1;
+
+        if (paused) instance.HideUI(); else instance.ShowUI();
     }
 
     // EVENT: After pressing the "Pause" button.
@@ -120,6 +129,8 @@ public class MainSceneUI : MonoBehaviour
     {
         paused = !paused;
         Time.timeScale = paused ? 0 : 1;
+
+        //if (paused) instance.HideUI(); else instance.ShowUI();
     }
 
     // EVENT: After pressing the "Retire level" button.
@@ -301,7 +312,7 @@ public class MainSceneUI : MonoBehaviour
             ))
             {
                 intoInventory = true;
-                SetPauseMode(true);
+                SetSceneMode(SceneMode.INVENTORY);
             }
 
             Rect planetInfoAndPlanetsLeftRect = new Rect(

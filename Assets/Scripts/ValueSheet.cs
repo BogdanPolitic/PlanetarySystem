@@ -11,8 +11,15 @@ public class ValueSheet
     public static float minAllowedTrajectoryRadius = 0.9f;
     public static float maxAllowedTrajectoryRadius = 5.5f;
 
+    public static float defaultTracjectoryLineThickness = 0.1f;
+
     public static float averagePlanetSize = 10.0f;
     public static float trajectoryOptimalDispersion = 0.05f; // Optimal distance between each consecutive 2 points on lines drawing, considering an average planet.
+
+
+
+    public static float halfsphereDestructionStart = 2.5f;  // The time which passes between the halfsphere creation and the start of the destruction.
+    public static float halfsphereDestructionEnd = 5.0f;   // The time which passes between the halfsphere creation and the complete destruction.
 
 
 
@@ -37,6 +44,7 @@ public class ValueSheet
     public static int pointsPenaltyPerPlanetDestroyed = 20;
 
     public static int totalPlanetsRewardDiv = 20;   // The number of all rewarded planet at the end of the level is going to be the total score divided by this variable (Mathf.Floor() must be perfomed).
+    public static int numberOfSwitchTokens = 4;
 
 
 

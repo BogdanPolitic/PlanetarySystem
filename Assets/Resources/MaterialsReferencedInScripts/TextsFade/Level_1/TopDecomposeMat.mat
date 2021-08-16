@@ -46,6 +46,6 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats: []
     m_Colors:
-    - DropdownFade: {r: 0, g: 0.7035948, b: 0, a: 0}
+    - DropdownFade: {r: 0, g: 0.50825274, b: 0, a: 0}
     - HighlightedColor: {r: 0.7490196, g: 0.03137255, b: 0, a: 0}
   m_BuildTextureStacks: []

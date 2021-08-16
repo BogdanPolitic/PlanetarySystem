@@ -77,7 +77,7 @@ public class InventoryUI : MonoBehaviour
         if (routeState == EXITING_INVENTORY)
         {
             MainSceneUI.ExitInventory();
-            MainSceneUI.SetPauseMode(false);
+            MainSceneUI.SetSceneMode(MainSceneUI.SceneMode.GAMEPLAY);
             FindObjectOfType<Camera>().gameObject.transform.position = lastPositionOutsideInventory;
             FindObjectOfType<Camera>().gameObject.transform.rotation = lastRotationOutsideInventory;
         }
@@ -144,7 +144,7 @@ public class InventoryUI : MonoBehaviour
             }
 
             GUI.DrawTexture(new Rect(screenWidth * 0.375f, screenHeight * 0.04f, screenWidth * 0.15f, screenHeight * 0.15f), currentPlanetTexture, ScaleMode.ScaleToFit, true, 1.5F);
-            GUI.Button(new Rect(screenWidth * 0.75f, screenHeight * 0.06f, screenWidth * 0.1f, screenHeight * 0.1f), "Switch tokens: 4");
+            GUI.Button(new Rect(screenWidth * 0.75f, screenHeight * 0.06f, screenWidth * 0.1f, screenHeight * 0.1f), "Switch tokens: " + LevelParameters.numberOfSwitchTokens);
 
         GUILayout.EndHorizontal();
     }
@@ -205,7 +205,15 @@ public class InventoryUI : MonoBehaviour
                 GUILayout.BeginHorizontal();
                 {
                     GUI.Label(new Rect(screenWidth * 0.1f, screenHeight * 0.05f, screenWidth * 0.075f, screenHeight * 0.05f), "Quantity: " + item.quantity);
-                    GUI.Button(new Rect(screenWidth * 0.2f, screenHeight * 0.05f, screenWidth * 0.075f, screenHeight * 0.1f), "Switch");
+                    if (GUI.Button(new Rect(screenWidth * 0.2f, screenHeight * 0.05f, screenWidth * 0.075f, screenHeight * 0.1f), "Switch"))
+                    {
+                        if (LevelParameters.numberOfSwitchTokens > 0)
+                        {
+                            LevelParameters.currentPlanet = item;
+                            LevelParameters.numberOfSwitchTokens--;
+                            PathReader1.cursorPlanetTexAssigned = false;
+                        }
+                    }
                 }
                 GUILayout.EndHorizontal();
 

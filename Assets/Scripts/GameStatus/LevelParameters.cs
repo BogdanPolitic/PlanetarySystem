@@ -28,6 +28,7 @@ public class LevelParameters : MonoBehaviour
 
     // dynamic:
     public static Inventory.PlanetStack currentPlanet;
+    public static int numberOfSwitchTokens;
 
     private void Awake()
     {
@@ -35,6 +36,7 @@ public class LevelParameters : MonoBehaviour
         planetPlacedThisFrame = false;
         numberOfPlanetsLastFrame = 0;
         planetsDestroyedThisFrame = 0;
+        numberOfSwitchTokens = ValueSheet.numberOfSwitchTokens;
     }
 
     private void Start()
